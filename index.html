@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國小六年級數學：圓周長與直徑的秘密</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Inter & Noto Sans TC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      height: 22px;
+      width: 22px;
+      border-radius: 9999px;
+      background: #4f46e5;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+    }
+  </style>
+</head>
+<body class="bg-white text-slate-800 min-h-screen flex flex-col antialiased">
+
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-100">
+          <i data-lucide="circle-dot" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900 leading-tight">圓周長與直徑的關係探究</h1>
+          <p class="text-xs text-slate-500 font-medium">動手滾動圓形並記錄位置，觀察數值間的變化</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+          國小六年級數學
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex-1 w-full flex flex-col gap-4">
+
+    <!-- Unified Interactive Canvas Section -->
+    <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 flex flex-col gap-4">
+      
+      <!-- Toolbar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
+            <i data-lucide="compass" class="w-4 h-4"></i>
+          </span>
+          <h2 class="text-sm font-bold text-slate-800">操作與記錄區</h2>
+          <span class="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md hidden sm:inline">
+            💡 在起點上下拖曳圓頂部的粉紅點可調整直徑（1~10公分）
+          </span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="btn-roll-toggle" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 text-xs font-bold transition-all shadow-sm">
+            <i data-lucide="play" class="w-3.5 h-3.5" id="btn-roll-icon"></i>
+            <span id="btn-roll-text">滾動一圈</span>
+          </button>
+          <button id="btn-reset-roll" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-medium transition-colors">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            回到起點
+          </button>
+          <button id="btn-record-point" disabled class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-300 text-slate-500 cursor-not-allowed text-xs font-bold transition-all" title="滾動滿一整圈後才能記錄點喔！">
+            <i data-lucide="pin" class="w-3.5 h-3.5"></i>
+            記錄這個點
+          </button>
+        </div>
+      </div>
+
+      <!-- Canvas Container with Zoom Controls -->
+      <div class="relative w-full rounded-xl bg-white overflow-hidden border border-slate-200 flex justify-center items-center h-[380px] sm:h-[440px]">
+        <canvas id="unifiedCanvas" class="w-full h-full block cursor-default select-none"></canvas>
+
+        <!-- Toast Notification for Incomplete Roll -->
+        <div id="record-toast" class="hidden absolute bottom-4 bg-slate-900/90 text-white text-xs px-3.5 py-2 rounded-lg shadow-lg backdrop-blur-xs flex items-center gap-2 pointer-events-none transition-all">
+          <i data-lucide="alert-circle" class="w-4 h-4 text-amber-400"></i>
+          <span>請先讓圓滾動滿一整圈（100%），才能記錄這個點喔！</span>
+        </div>
+        
+        <!-- Zoom & View controls on canvas -->
+        <div class="absolute top-3 left-3 flex items-center bg-white/95 backdrop-blur-md rounded-lg border border-slate-300 shadow-sm p-1 gap-1 text-xs">
+          <button id="btn-zoom-out" class="p-1.5 hover:bg-slate-100 text-slate-700 rounded transition-colors" title="縮小 (亦可滑鼠滾輪向下)">
+            <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+          </button>
+          <button id="btn-zoom-reset" class="px-2 py-1 hover:bg-slate-100 text-slate-700 rounded font-semibold transition-colors" title="重設縮放">
+            <span id="zoom-level-text">100%</span>
+          </button>
+          <button id="btn-zoom-in" class="p-1.5 hover:bg-slate-100 text-slate-700 rounded transition-colors" title="放大 (亦可滑鼠滾輪向上)">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          </button>
+          <span class="text-[10px] text-slate-400 border-l border-slate-200 pl-1.5 pr-1 hidden sm:inline">可按住空白處拖曳移動</span>
+        </div>
+
+        <!-- Legend / Feature toggles floating panel -->
+        <div class="absolute top-3 right-3 flex flex-col gap-1.5 bg-white/95 backdrop-blur-md px-3 py-2 rounded-lg border border-slate-300 text-xs text-slate-700 shadow-sm">
+          <label class="flex items-center gap-1.5 cursor-pointer hover:text-indigo-600">
+            <input type="checkbox" id="chk-show-projections" checked class="rounded text-indigo-600 focus:ring-0">
+            <span>對齊虛線</span>
+          </label>
+          <label class="flex items-center gap-1.5 cursor-pointer hover:text-indigo-600">
+            <input type="checkbox" id="chk-show-ghost-circles" checked class="rounded text-indigo-600 focus:ring-0">
+            <span>保留圓形外框</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Progress Slider Section -->
+      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="w-full sm:flex-1 space-y-1">
+          <div class="flex justify-between text-xs text-slate-700">
+            <span class="font-medium">滾動進度：<span id="roll-percent" class="font-bold text-indigo-600">0%</span></span>
+            <span>展開長度：<span id="unfolded-length" class="font-bold text-amber-600">0.00</span> 公分</span>
+          </div>
+          <input type="range" id="rollSlider" min="0" max="1" step="0.005" value="0" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+        </div>
+        <div class="text-xs text-slate-500 flex items-center gap-1 shrink-0 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+          <i data-lucide="move-vertical" class="w-3.5 h-3.5 text-pink-500"></i>
+          <span>直徑大小：<strong id="slider-diameter-val" class="text-cyan-700 font-bold">4 公分</strong>（在起點上下拖曳調直徑 1~10cm）</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Data Table & Discovery Question Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+      
+      <!-- Table of collected points (5 cols) -->
+      <div class="lg:col-span-5 bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col justify-between space-y-3 h-full">
+        <div class="space-y-3">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="clipboard-list" class="w-4 h-4 text-indigo-600"></i>
+              <span>測量記錄表</span>
+            </h3>
+            <button id="btn-clear-points" class="text-xs text-rose-500 hover:text-rose-700 font-bold">清除全部</button>
+          </div>
+
+          <div class="overflow-x-auto max-h-[360px] overflow-y-auto">
+            <table class="w-full text-left text-xs text-slate-600">
+              <thead class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 sticky top-0">
+                <tr>
+                  <th class="py-2 px-2">次數</th>
+                  <th class="py-2 px-2 text-amber-700">滾動一圈長度</th>
+                  <th class="py-2 px-2 text-cyan-700">直徑</th>
+                  <th class="py-2 px-2 text-indigo-700">比值 (圓周長÷直徑)</th>
+                  <th class="py-2 px-1 text-right">刪除</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium" id="table-body">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Multiple Choice & Discovery (7 cols) -->
+      <div class="lg:col-span-7 bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-4 h-full">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+          <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+            <i data-lucide="help-circle" class="w-4 h-4 text-amber-500"></i>
+            <span>探究思考：動動腦想一想</span>
+          </h3>
+          <span class="text-xs text-slate-400">觀察數據動手回答</span>
+        </div>
+
+        <div class="space-y-3 text-xs" id="quiz-container">
+          
+          <!-- Question 1 -->
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 quiz-item" data-q="1" data-answer="B">
+            <p class="font-bold text-slate-800 text-xs">
+              1. 當圓的直徑從 2 公分變大為 4 公分時，滾動一圈的長度會有什麼變化？
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button class="option-btn text-left p-2 rounded-lg border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 transition-all text-slate-700" data-opt="A">
+                A. 長度變短
+              </button>
+              <button class="option-btn text-left p-2 rounded-lg border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 transition-all text-slate-700" data-opt="B">
+                B. 長度跟著變長
+              </button>
+              <button class="option-btn text-left p-2 rounded-lg border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 transition-all text-slate-700" data-opt="C">
+                C. 完全沒有改變
+              </button>
+            </div>
+            <div class="feedback hidden text-xs font-semibold px-2.5 py-1.5 rounded-lg"></div>
+          </div>
+
+          <!-- Question 2 -->
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 quiz-item" data-q="2" data-answer="A">
+            <p class="font-bold text-slate-800 text-xs">
+              2. 觀察記錄表上的數值，滾動一圈的長度大約是直徑的多少倍？
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button class="option-btn text-left p-2 rounded-lg border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 transition-all text-slate-700" data-opt="A">
+                A. 大約 3 倍多一些
+              </button>
+              <button class="option-btn text-left p-2 rounded-lg border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 transition-all text-slate-700" data-opt="B">
+                B. 剛好是 2 倍
+              </button>
+              <button class="option-btn text-left p-2 rounded-lg border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 transition-all text-slate-700" data-opt="C">
+                C. 大約 5 倍多
+              </button>
+            </div>
+            <div class="feedback hidden text-xs font-semibold px-2.5 py-1.5 rounded-lg"></div>
+          </div>
+
+          <!-- Question 3 -->
+          <div class="p-3.5 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-2.5" id="calc-quiz-item">
+            <div class="text-xs text-slate-800 flex flex-wrap items-center gap-2 font-bold">
+              <span>3. 圓周長比直徑的比值皆為</span>
+              <input type="text" id="input-ratio-val" placeholder="計算至小數點後第二位" class="inline-block w-44 px-2.5 py-1 bg-white border border-indigo-300 rounded text-center text-xs font-bold text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs">
+              <button id="btn-check-calc" class="px-3.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-bold transition-colors shadow-2xs">
+                檢查答案
+              </button>
+            </div>
+
+            <div id="calc-feedback" class="hidden text-xs font-medium p-2.5 rounded-lg leading-relaxed"></div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    // State Management for Elementary School users
+    const state = {
+      diameter: 4,             // 直徑 (公分，限制為整數 1~10)
+      rollProgress: 0.0,       // 滾動進度 0.0 到 1.0
+      isRolling: false,
+      animationId: null,
+      showProjections: true,
+      showGhostCircles: true,
+      points: [],              // 記錄點清單
+      isDraggingDiameter: false,
+      zoom: 1.0,               // 縮放比例 0.7x ~ 2.5x
+      panOffset: { x: 0, y: 0 },
+      isPanning: false,
+      panStart: { x: 0, y: 0 }
+    };
+
+    // DOM Elements
+    const canvas = document.getElementById('unifiedCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const rollSlider = document.getElementById('rollSlider');
+    const btnRollToggle = document.getElementById('btn-roll-toggle');
+    const btnResetRoll = document.getElementById('btn-reset-roll');
+    const btnRollText = document.getElementById('btn-roll-text');
+    const btnRollIcon = document.getElementById('btn-roll-icon');
+    const btnRecordPoint = document.getElementById('btn-record-point');
+    const btnClearPoints = document.getElementById('btn-clear-points');
+    const recordToast = document.getElementById('record-toast');
+
+    const sliderDiameterVal = document.getElementById('slider-diameter-val');
+    const rollPercent = document.getElementById('roll-percent');
+    const unfoldedLength = document.getElementById('unfolded-length');
+    const tableBody = document.getElementById('table-body');
+
+    const chkShowProjections = document.getElementById('chk-show-projections');
+    const chkShowGhostCircles = document.getElementById('chk-show-ghost-circles');
+
+    const btnCheckCalc = document.getElementById('btn-check-calc');
+    const calcFeedback = document.getElementById('calc-feedback');
+
+    const zoomLevelText = document.getElementById('zoom-level-text');
+    const btnZoomIn = document.getElementById('btn-zoom-in');
+    const btnZoomOut = document.getElementById('btn-zoom-out');
+    const btnZoomReset = document.getElementById('btn-zoom-reset');
+
+    // 座標系全域設定（以 1 單位代表 1 公分，每格邊長皆為 1 單位之正方形）
+    const coordConfig = {
+      maxX: 36,
+      maxY: 11,
+      padding: { left: 45, right: 30, top: 30, bottom: 40 },
+      unitPx: 25,
+      originX: 45,
+      originY: 350
+    };
+
+    // High DPI Canvas resize
+    function resizeCanvas(c, context) {
+      const rect = c.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      c.width = rect.width * dpr;
+      c.height = rect.height * dpr;
+      context.resetTransform?.();
+      context.scale(dpr, dpr);
+      return { width: rect.width, height: rect.height };
+    }
+
+    function drawScene() {
+      const { width, height } = resizeCanvas(canvas, ctx);
+      ctx.clearRect(0, 0, width, height);
+
+      // 計算 1:1 正方形網格單位像素（每 1 單位代表 1 公分）
+      // 確保縱向 11 格與橫向足夠空間，同時保證橫縱 unitPx 完全相同
+      const availableH = height - coordConfig.padding.top - coordConfig.padding.bottom;
+      const baseUnitFromH = availableH / coordConfig.maxY;
+      coordConfig.unitPx = Math.max(22, baseUnitFromH);
+
+      coordConfig.originX = coordConfig.padding.left;
+      coordConfig.originY = height - coordConfig.padding.bottom;
+
+      const unit = coordConfig.unitPx;
+      const originX = coordConfig.originX;
+      const originY = coordConfig.originY;
+
+      // 轉換世界座標 (x, y) 為未經 zoom/pan 之局部畫布像素
+      const toScreenX = (x) => originX + x * unit;
+      const toScreenY = (y) => originY - y * unit;
+
+      ctx.save();
+      // 套用視角平移與縮放（以原點 (originX, originY) 為基準中心）
+      ctx.translate(originX + state.panOffset.x, originY + state.panOffset.y);
+      ctx.scale(state.zoom, state.zoom);
+      ctx.translate(-originX, -originY);
+
+      const topLimitY = toScreenY(coordConfig.maxY);
+      const rightLimitX = toScreenX(coordConfig.maxX);
+
+      // 1. 繪製純 1:1 正方形棋盤格（每 1 格邊長代表「1」）
+      ctx.lineWidth = 1;
+      
+      // 垂直格線（X = 0, 1, 2, 3 ... 36）
+      for (let x = 0; x <= coordConfig.maxX; x += 1) {
+        const sx = toScreenX(x);
+        ctx.strokeStyle = (x % 5 === 0) ? '#cbd5e1' : '#e2e8f0';
+        ctx.beginPath();
+        ctx.moveTo(sx, topLimitY);
+        ctx.lineTo(sx, originY);
+        ctx.stroke();
+
+        // X 軸刻度數字：每 1 格都標，或為防擁擠偶數標示
+        if (x % 2 === 0) {
+          ctx.fillStyle = '#64748b';
+          ctx.font = '11px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(`${x}`, sx, originY + 16);
+        }
+      }
+
+      // 水平格線（Y = 0, 1, 2, 3 ... 11）
+      for (let y = 0; y <= coordConfig.maxY; y += 1) {
+        const sy = toScreenY(y);
+        ctx.strokeStyle = (y % 5 === 0) ? '#cbd5e1' : '#e2e8f0';
+        ctx.beginPath();
+        ctx.moveTo(originX, sy);
+        ctx.lineTo(rightLimitX, sy);
+        ctx.stroke();
+
+        // Y 軸刻度數字：每 1 格標註數值
+        ctx.fillStyle = '#64748b';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(`${y}`, originX - 8, sy + 4);
+      }
+
+      // 2. 座標軸主線 (Axes Lines)
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(originX, topLimitY - 12);
+      ctx.lineTo(originX, originY);
+      ctx.lineTo(rightLimitX + 16, originY);
+      ctx.stroke();
+
+      // 原點 0 標示
+      ctx.fillStyle = '#475569';
+      ctx.textAlign = 'right';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText('0', originX - 8, originY + 16);
+
+      // 3. 繪製已經記錄的歷史圓點與輪廓
+      state.points.forEach((pt, idx) => {
+        const ptX = pt.c;
+        const ptY = pt.d;
+        const screenPtX = toScreenX(ptX);
+        const screenPtY = toScreenY(ptY);
+
+        // 歷史圓形外框（正圓）
+        if (state.showGhostCircles) {
+          const radiusPx = (ptY / 2) * unit;
+          const circleCenterY = originY - radiusPx;
+
+          ctx.strokeStyle = 'rgba(100, 116, 139, 0.35)';
+          ctx.lineWidth = 1.2;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.arc(screenPtX, circleCenterY, radiusPx, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // 投影對齊虛線
+        if (state.showProjections) {
+          ctx.strokeStyle = 'rgba(148, 163, 184, 0.55)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(screenPtX, screenPtY);
+          ctx.lineTo(screenPtX, originY);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(screenPtX, screenPtY);
+          ctx.lineTo(originX, screenPtY);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // 圓點
+        ctx.fillStyle = pt.color || '#3b82f6';
+        ctx.beginPath();
+        ctx.arc(screenPtX, screenPtY, 5.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // 標示第幾次
+        ctx.fillStyle = pt.color || '#3b82f6';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(`第${idx + 1}次`, screenPtX + 8, screenPtY + 4);
+      });
+
+      // 4. 當前正在滾動的圓盤與地面展開線
+      const curD = state.diameter;
+      const fullCircumference = curD * Math.PI;
+      const currentRolledX = fullCircumference * state.rollProgress;
+
+      const screenCurX = toScreenX(currentRolledX);
+      const radiusPx = (curD / 2) * unit;
+      const circleCenterY = originY - radiusPx;
+
+      // 地面滾動展開的粗色條
+      if (state.rollProgress > 0) {
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(originX, originY);
+        ctx.lineTo(screenCurX, originY);
+        ctx.stroke();
+
+        if (screenCurX - originX > 45) {
+          ctx.fillStyle = '#d97706';
+          ctx.font = 'bold 12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(`${currentRolledX.toFixed(2)}`, (originX + screenCurX) / 2, originY + 16);
+        }
+      }
+
+      // 繪製滾動中的圓形（標準正圓）
+      ctx.save();
+      ctx.translate(screenCurX, circleCenterY);
+      const angle = state.rollProgress * Math.PI * 2;
+      ctx.rotate(angle);
+
+      // 圓形本體
+      ctx.fillStyle = 'rgba(99, 102, 241, 0.12)';
+      ctx.beginPath();
+      ctx.arc(0, 0, radiusPx, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // 圓盤內的直徑參考虛線
+      ctx.strokeStyle = '#818cf8';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(0, -radiusPx);
+      ctx.lineTo(0, radiusPx);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 滾動接觸指針
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, radiusPx);
+      ctx.stroke();
+
+      // 接觸點圓珠
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.arc(0, radiusPx, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 圓心
+      ctx.fillStyle = '#4f46e5';
+      ctx.beginPath();
+      ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      // 5. 直徑高度與對齊虛線
+      const screenDiameterY = toScreenY(curD);
+
+      if (state.showProjections) {
+        ctx.strokeStyle = 'rgba(14, 165, 233, 0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        ctx.moveTo(originX, screenDiameterY);
+        ctx.lineTo(screenCurX, screenDiameterY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(screenCurX, originY);
+        ctx.lineTo(screenCurX, screenDiameterY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // 6. 動態直徑調整點 (在圓頂部)
+      const currentPtScreenY = screenDiameterY;
+      const isAtStart = state.rollProgress <= 0.001;
+
+      // 外圈特效：在起始點時提示可上下拖曳
+      if (isAtStart) {
+        ctx.strokeStyle = 'rgba(236, 72, 153, 0.4)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(screenCurX, currentPtScreenY, 11, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 提示小箭頭（上下）
+        ctx.fillStyle = '#db2777';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('▲', screenCurX, currentPtScreenY - 14);
+        ctx.fillText('▼', screenCurX, currentPtScreenY + 20);
+      }
+
+      // 頂部直徑點實體
+      ctx.fillStyle = isAtStart ? '#ec4899' : '#94a3b8';
+      ctx.beginPath();
+      ctx.arc(screenCurX, currentPtScreenY, 6.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // 在起始點時提示拖曳操作
+      if (isAtStart) {
+        ctx.fillStyle = '#be185d';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('⇕ 上下拖曳調直徑', screenCurX + 10, currentPtScreenY - 5);
+      }
+
+      // 當完全滾完 1 圈時，出現完成標記
+      if (state.rollProgress >= 0.999) {
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(screenCurX, currentPtScreenY, 12, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#059669';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText('✓ 滾滿一圈！', screenCurX + 12, currentPtScreenY + 16);
+      }
+
+      ctx.restore();
+    }
+
+    function updateAllViews() {
+      const d = Math.round(state.diameter);
+      const c = d * Math.PI;
+
+      if (sliderDiameterVal) sliderDiameterVal.textContent = `${d} 公分`;
+
+      const rolledX = c * state.rollProgress;
+      if (rollPercent) rollPercent.textContent = `${Math.round(state.rollProgress * 100)}%`;
+      if (unfoldedLength) unfoldedLength.textContent = rolledX.toFixed(2);
+      if (zoomLevelText) zoomLevelText.textContent = `${Math.round(state.zoom * 100)}%`;
+
+      // 檢查是否滾動完成（大於等於 99.9%）與是否已經記錄過該直徑
+      const isFinished = state.rollProgress >= 0.999;
+      const alreadyRecorded = state.points.some(p => p.d === d);
+
+      if (alreadyRecorded) {
+        btnRecordPoint.disabled = true;
+        btnRecordPoint.classList.remove('bg-emerald-600', 'text-white', 'hover:bg-emerald-700', 'animate-pulse');
+        btnRecordPoint.classList.add('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
+        btnRecordPoint.title = '直徑 ' + d + ' 公分已經記錄過了喔！';
+      } else if (isFinished) {
+        btnRecordPoint.disabled = false;
+        btnRecordPoint.classList.remove('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
+        btnRecordPoint.classList.add('bg-emerald-600', 'text-white', 'hover:bg-emerald-700', 'shadow-sm', 'animate-pulse');
+        btnRecordPoint.title = '點擊記錄此時的圓周長與直徑';
+      } else {
+        btnRecordPoint.disabled = true;
+        btnRecordPoint.classList.remove('bg-emerald-600', 'text-white', 'hover:bg-emerald-700', 'animate-pulse');
+        btnRecordPoint.classList.add('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
+        btnRecordPoint.title = '滾動滿一整圈後才能記錄點喔！';
+      }
+
+      drawScene();
+    }
+
+    // 視圖轉換計算：將螢幕滑鼠座標轉為世界坐標（考量 zoom 與 panOffset）
+    function getCanvasCoords(evt) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+      const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+      const rawX = clientX - rect.left;
+      const rawY = clientY - rect.top;
+
+      const originAnchorX = coordConfig.originX;
+      const originAnchorY = coordConfig.originY;
+
+      const worldX = (rawX - originAnchorX - state.panOffset.x) / state.zoom + originAnchorX;
+      const worldY = (rawY - originAnchorY - state.panOffset.y) / state.zoom + originAnchorY;
+
+      return {
+        rawX,
+        rawY,
+        x: worldX,
+        y: worldY,
+        width: rect.width,
+        height: rect.height
+      };
+    }
+
+    function isOverDiameterHandle(worldX, worldY) {
+      if (state.rollProgress > 0.001) return false;
+      const targetScreenX = coordConfig.originX;
+      const targetScreenY = coordConfig.originY - state.diameter * coordConfig.unitPx;
+      const dist = Math.hypot(worldX - targetScreenX, worldY - targetScreenY);
+      return dist <= (22 / Math.min(state.zoom, 1));
+    }
+
+    // 觸控雙指縮放支援
+    let touchStartDist = 0;
+    let touchStartZoom = 1;
+
+    function handleDragStart(e) {
+      if (e.touches && e.touches.length === 2) {
+        touchStartDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        touchStartZoom = state.zoom;
+        return;
+      }
+
+      const { rawX, rawY, x, y } = getCanvasCoords(e);
+
+      if (isOverDiameterHandle(x, y)) {
+        state.isDraggingDiameter = true;
+        canvas.style.cursor = 'ns-resize';
+        e.preventDefault();
+      } else {
+        // 其餘區域允許平移畫布（Pan）
+        state.isPanning = true;
+        state.panStart = { x: rawX - state.panOffset.x, y: rawY - state.panOffset.y };
+        canvas.style.cursor = 'grab';
+      }
+    }
+
+    function handleDragMove(e) {
+      if (e.touches && e.touches.length === 2) {
+        const currentDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        if (touchStartDist > 0) {
+          const newZoom = touchStartZoom * (currentDist / touchStartDist);
+          setZoom(newZoom);
+        }
+        e.preventDefault();
+        return;
+      }
+
+      const { rawX, rawY, x, y } = getCanvasCoords(e);
+
+      if (state.isDraggingDiameter) {
+        let newD = (coordConfig.originY - y) / coordConfig.unitPx;
+        // 限制直徑在 1 ~ 10 公分之間的整數
+        newD = Math.max(1, Math.min(10, newD));
+        state.diameter = Math.round(newD);
+        updateAllViews();
+        e.preventDefault();
+      } else if (state.isPanning) {
+        state.panOffset.x = rawX - state.panStart.x;
+        state.panOffset.y = rawY - state.panStart.y;
+        canvas.style.cursor = 'grabbing';
+        drawScene();
+      } else {
+        if (state.rollProgress <= 0.001 && isOverDiameterHandle(x, y)) {
+          canvas.style.cursor = 'ns-resize';
+        } else {
+          canvas.style.cursor = 'default';
+        }
+      }
+    }
+
+    function handleDragEnd() {
+      if (state.isDraggingDiameter) {
+        state.isDraggingDiameter = false;
+        canvas.style.cursor = 'default';
+      }
+      if (state.isPanning) {
+        state.isPanning = false;
+        canvas.style.cursor = 'default';
+      }
+      touchStartDist = 0;
+    }
+
+    function setZoom(val) {
+      state.zoom = Math.max(0.7, Math.min(2.5, Math.round(val * 100) / 100));
+      updateAllViews();
+    }
+
+    // 滑鼠滾輪獨立縮放
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      setZoom(state.zoom * zoomFactor);
+    }, { passive: false });
+
+    // 縮放按鈕操作
+    btnZoomIn.addEventListener('click', () => setZoom(state.zoom + 0.15));
+    btnZoomOut.addEventListener('click', () => setZoom(state.zoom - 0.15));
+    btnZoomReset.addEventListener('click', () => {
+      state.zoom = 1.0;
+      state.panOffset = { x: 0, y: 0 };
+      updateAllViews();
+    });
+
+    // 註冊滑鼠與觸控事件
+    canvas.addEventListener('mousedown', handleDragStart);
+    window.addEventListener('mousemove', handleDragMove);
+    window.addEventListener('mouseup', handleDragEnd);
+
+    canvas.addEventListener('touchstart', handleDragStart, { passive: false });
+    window.addEventListener('touchmove', handleDragMove, { passive: false });
+    window.addEventListener('touchend', handleDragEnd);
+
+    function renderTable() {
+      tableBody.innerHTML = '';
+      if (state.points.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400">目前沒有記錄，調整直徑並點擊「記錄這個點」開始探索！</td></tr>`;
+        return;
+      }
+
+      state.points.forEach((pt, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition-colors';
+        tr.innerHTML = `
+          <td class="py-2 px-2 font-bold flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full inline-block" style="background-color: ${pt.color};"></span>
+            第 ${idx + 1} 次
+          </td>
+          <td class="py-2 px-2 font-bold text-amber-600">${pt.c.toFixed(2)} cm</td>
+          <td class="py-2 px-2 font-bold text-cyan-600">${Math.round(pt.d)} cm</td>
+          <td class="py-2 px-2">
+            <input type="text" 
+                   class="ratio-input w-40 px-2 py-1 text-xs text-center border border-slate-200 rounded font-semibold focus:outline-none focus:border-indigo-500 shadow-2xs" 
+                   placeholder="計算至小數點後第二位" 
+                   data-id="${pt.id}" 
+                   value="${pt.userRatio || ''}">
+          </td>
+          <td class="py-2 px-1 text-right">
+            <button class="delete-btn text-slate-400 hover:text-rose-500 transition-colors" data-id="${pt.id}" title="刪除">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i>
+            </button>
+          </td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Multiple Choice & Discovery Logic
+    function setupQuiz() {
+      const quizItems = document.querySelectorAll('.quiz-item');
+      quizItems.forEach(item => {
+        const correctOpt = item.dataset.answer;
+        const feedback = item.querySelector('.feedback');
+        const buttons = item.querySelectorAll('.option-btn');
+
+        buttons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const selectedOpt = btn.dataset.opt;
+            buttons.forEach(b => {
+              b.classList.remove('bg-emerald-50', 'border-emerald-500', 'text-emerald-700', 'bg-rose-50', 'border-rose-400', 'text-rose-700');
+            });
+
+            feedback.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200', 'bg-rose-50', 'text-rose-800', 'border-rose-200');
+
+            if (selectedOpt === correctOpt) {
+              btn.classList.add('bg-emerald-50', 'border-emerald-500', 'text-emerald-700');
+              feedback.classList.add('bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200');
+              feedback.textContent = '✓ 答對了！很棒的觀察！';
+            } else {
+              btn.classList.add('bg-rose-50', 'border-rose-400', 'text-rose-700');
+              feedback.classList.add('bg-rose-50', 'text-rose-800', 'border', 'border-rose-200');
+              feedback.textContent = '✗ 再想想看，觀察上方的數值或圖形再試一次喔！';
+            }
+          });
+        });
+      });
+
+      // Question 3: Simplified Discovery Logic (Strictly 3.14)
+      const inputRatioVal = document.getElementById('input-ratio-val');
+
+      btnCheckCalc.addEventListener('click', () => {
+        calcFeedback.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-900', 'border-emerald-300', 'bg-rose-50', 'text-rose-900', 'border-rose-300');
+        calcFeedback.classList.add('border');
+
+        const valText = inputRatioVal.value.trim();
+        const numVal = parseFloat(valText);
+
+        if (!valText) {
+          calcFeedback.classList.add('bg-rose-50', 'text-rose-900', 'border-rose-300');
+          calcFeedback.textContent = '請先填入你算出的比值再按檢查喔！';
+          return;
+        }
+
+        const isValCorrect = !isNaN(numVal) && Math.abs(numVal - 3.14) < 0.0001;
+
+        if (isValCorrect) {
+          calcFeedback.classList.add('bg-emerald-50', 'text-emerald-900', 'border-emerald-300');
+          calcFeedback.innerHTML = `
+            <div class="font-bold flex items-center gap-1 text-emerald-800 mb-1">
+              <span>🎉 答對了！太厲害了！</span>
+            </div>
+            <div>
+              正如你計算與觀察到的：<strong>無論圓形大小，圓周長比直徑的比值皆大約為 3.14！</strong><br>
+              在數學上，這個固定不變的值就叫做<strong class="text-indigo-700 underline font-extrabold decoration-indigo-400">「圓周率」</strong>。
+            </div>
+          `;
+        } else {
+          calcFeedback.classList.add('bg-rose-50', 'text-rose-900', 'border-rose-300');
+          calcFeedback.innerHTML = `✗ 再算算看喔！拿左側表格中的「圓周長 ÷ 直徑」（例如：12.57 ÷ 4），計算至小數點後第二位大約是多少呢？`;
+        }
+      });
+    }
+
+    function toggleRolling() {
+      if (state.isRolling) {
+        state.isRolling = false;
+        cancelAnimationFrame(state.animationId);
+        btnRollText.textContent = '繼續滾動';
+        btnRollIcon.setAttribute('data-lucide', 'play');
+        if (window.lucide) lucide.createIcons();
+      } else {
+        if (state.rollProgress >= 1.0) {
+          state.rollProgress = 0.0;
+        }
+        state.isRolling = true;
+        btnRollText.textContent = '暫停滾動';
+        btnRollIcon.setAttribute('data-lucide', 'pause');
+        if (window.lucide) lucide.createIcons();
+
+        let lastTime = performance.now();
+        function step(now) {
+          if (!state.isRolling) return;
+          const dt = (now - lastTime) / 1000;
+          lastTime = now;
+
+          state.rollProgress += dt / 2.2;
+          if (state.rollProgress >= 1.0) {
+            state.rollProgress = 1.0;
+            state.isRolling = false;
+            btnRollText.textContent = '滾動一圈';
+            btnRollIcon.setAttribute('data-lucide', 'play');
+            if (window.lucide) lucide.createIcons();
+          }
+          rollSlider.value = state.rollProgress;
+          updateAllViews();
+
+          if (state.isRolling) {
+            state.animationId = requestAnimationFrame(step);
+          }
+        }
+        state.animationId = requestAnimationFrame(step);
+      }
+    }
+
+    function resetRolling() {
+      state.isRolling = false;
+      cancelAnimationFrame(state.animationId);
+      state.rollProgress = 0.0;
+      rollSlider.value = 0.0;
+      btnRollText.textContent = '滾動一圈';
+      btnRollIcon.setAttribute('data-lucide', 'play');
+      if (window.lucide) lucide.createIcons();
+      updateAllViews();
+    }
+
+    rollSlider.addEventListener('input', (e) => {
+      state.isRolling = false;
+      cancelAnimationFrame(state.animationId);
+      btnRollText.textContent = '繼續滾動';
+      btnRollIcon.setAttribute('data-lucide', 'play');
+      if (window.lucide) lucide.createIcons();
+
+      state.rollProgress = parseFloat(e.target.value);
+      updateAllViews();
+    });
+
+    btnRollToggle.addEventListener('click', toggleRolling);
+    btnResetRoll.addEventListener('click', resetRolling);
+
+    let toastTimer = null;
+    function showToast(msg) {
+      if (!recordToast) return;
+      if (msg) {
+        recordToast.querySelector('span').textContent = msg;
+      }
+      recordToast.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        recordToast.classList.add('hidden');
+      }, 2500);
+    }
+
+    btnRecordPoint.addEventListener('click', () => {
+      // 確保滾動已達 100%
+      if (state.rollProgress < 0.999) {
+        showToast('請先讓圓滾動滿一整圈（100%），才能記錄這個點喔！');
+        return;
+      }
+
+      const intDiameter = Math.round(state.diameter);
+
+      // 防重複檢查：同一直徑只能記錄一次
+      const isDuplicate = state.points.some(p => p.d === intDiameter);
+      if (isDuplicate) {
+        showToast(`直徑 ${intDiameter} 公分已經記錄過了喔！請調整其他直徑再記錄。`);
+        return;
+      }
+
+      const colors = ['#38bdf8', '#34d399', '#fbbf24', '#f472b6', '#a78bfa', '#f97316'];
+      state.points.push({
+        id: Date.now(),
+        d: intDiameter,
+        c: intDiameter * Math.PI,
+        color: colors[state.points.length % colors.length],
+        userRatio: ''
+      });
+      renderTable();
+      updateAllViews();
+    });
+
+    tableBody.addEventListener('input', (e) => {
+      const input = e.target.closest('.ratio-input');
+      if (!input) return;
+      const id = parseInt(input.dataset.id, 10);
+      const point = state.points.find(p => p.id === id);
+      if (point) {
+        point.userRatio = input.value.trim();
+      }
+    });
+
+    tableBody.addEventListener('click', (e) => {
+      const btn = e.target.closest('.delete-btn');
+      if (!btn) return;
+      const id = parseInt(btn.dataset.id, 10);
+      state.points = state.points.filter(p => p.id !== id);
+      renderTable();
+      updateAllViews();
+    });
+
+    btnClearPoints.addEventListener('click', () => {
+      state.points = [];
+      renderTable();
+      updateAllViews();
+    });
+
+    chkShowProjections.addEventListener('change', (e) => {
+      state.showProjections = e.target.checked;
+      drawScene();
+    });
+    chkShowGhostCircles.addEventListener('change', (e) => {
+      state.showGhostCircles = e.target.checked;
+      drawScene();
+    });
+
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        updateAllViews();
+      }, 100);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.createIcons();
+      renderTable();
+      updateAllViews();
+      setupQuiz();
+    });
+  </script>
+</body>
+</html>
